@@ -3,6 +3,7 @@ package com.basecamp.service.impl;
 import com.basecamp.exception.InternalException;
 import com.basecamp.exception.InvalidDataException;
 import com.basecamp.service.ProductService;
+import com.basecamp.wire.Bug;
 import com.basecamp.wire.GetHandleProductIdsResponse;
 import com.basecamp.wire.GetProductInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -10,13 +11,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
 
         return callToDbAnotherServiceETC(productId);
     }
+
 
     public GetHandleProductIdsResponse handleProducts(List<String> productIds) {
         Map<String, Future<String>> handledTasks = new HashMap<>();
@@ -64,6 +61,55 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Product executor stopped.");
     }
+
+    @Override
+    public List<Bug> homework() throws ExecutionException, InterruptedException {
+
+        Scanner in = new Scanner(System.in);
+        System.out.print("Input a number of bugs that will participate in race: ");
+        int num_of_threads = in.nextInt();
+        while (num_of_threads == 0 || num_of_threads <0) {
+            System.out.print("Input a NOTNULL/POSITIVE number of bugs that will participate in race: ");
+            num_of_threads = in.nextInt();
+        }
+        System.out.println("There are " + num_of_threads + "participants");
+
+        ExecutorService executorService = Executors.newFixedThreadPool(num_of_threads);
+
+        Callable<Bug> callable = () -> {
+            return startRace(10, Thread.currentThread().getName()); };
+
+        ArrayList<Callable<Bug>> callableArrayList = new ArrayList<>();
+        for (int i = 0; i < num_of_threads; i++) {
+            callableArrayList.add(callable);
+        }
+        List<Future<Bug>> futures = executorService.invokeAll(callableArrayList);
+
+        List<Bug> bugs = new ArrayList<>();
+        for (Future<Bug> future : futures) {
+            bugs.add(future.get());
+        }
+        bugs.sort((o1, o2) -> o1.getTimemoment() - o2.getTimemoment());
+        System.out.println(bugs);
+        executorService.shutdown();
+        return bugs;
+    }
+
+    private static Bug startRace(int distance, String nameOfBug) throws InterruptedException {
+        int step = 0;
+        int timemoment = 0;
+        while (step < distance) {
+            ++timemoment;
+            Thread.sleep(1000);
+            step += new Random().nextInt(2);
+            System.out.println
+                    ("At " + timemoment + " time moment '" + Thread.currentThread().getName() + "'  is on the step " + step);
+        }
+        System.out.println("At " + timemoment + " time moment Bug '" + Thread.currentThread().getName() + "' passed distance");
+        return new Bug(timemoment, Thread.currentThread().getName(), step);
+    }
+
+    ;
 
     private void validateId(String id) {
 

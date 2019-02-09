@@ -1,6 +1,8 @@
 package com.basecamp.controller;
 
+import com.basecamp.service.ProductService;
 import com.basecamp.service.impl.ProductServiceImpl;
+import com.basecamp.wire.Bug;
 import com.basecamp.wire.GetHandleProductIdsResponse;
 import com.basecamp.wire.GetProductInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -45,11 +49,10 @@ public class ProductController {
     }
 
     @GetMapping(value = "/homework", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity homework() {
+    public ResponseEntity homework() throws ExecutionException, InterruptedException {
 
 
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(productService.homework());
     }
 
 }
